@@ -1,8 +1,9 @@
-import { Home, Building2, Folders, Shield, Database, FileText, FileCheck, GitBranch, Users, Settings } from 'lucide-react';
+import { Home, Building2, Folders, Shield, Database, FileText, FileCheck, GitBranch, Users, Settings, LogOut } from 'lucide-react';
 
 interface SidebarProps {
   currentPage: string;
   onPageChange: (page: string) => void;
+  onExit: () => void;
 }
 
 const menuItems = [
@@ -17,7 +18,7 @@ const menuItems = [
   { id: 'settings', label: 'الإعدادات', icon: Settings },
 ];
 
-export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
+export function Sidebar({ currentPage, onPageChange, onExit }: SidebarProps) {
   return (
     <div className="w-64 h-screen flex flex-col border-l" style={{ backgroundColor: 'white', borderColor: 'var(--border)' }}>
       <div className="p-6 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -50,6 +51,17 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
           );
         })}
       </nav>
+
+      <div className="p-4 border-t" style={{ borderColor: 'var(--border)' }}>
+        <button
+          onClick={onExit}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-red-50"
+          style={{ color: 'var(--umber-light)' }}
+        >
+          <LogOut className="w-5 h-5" />
+          <span>تغيير الدور</span>
+        </button>
+      </div>
     </div>
   );
 }

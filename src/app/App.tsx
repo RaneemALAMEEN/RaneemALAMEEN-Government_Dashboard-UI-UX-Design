@@ -73,6 +73,7 @@ export default function App() {
       <Sidebar
         currentPage={currentPage}
         onPageChange={setCurrentPage}
+        onExit={() => setCurrentRole(null)}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
