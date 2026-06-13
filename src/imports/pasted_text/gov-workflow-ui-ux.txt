@@ -1,0 +1,389 @@
+You are a Senior Product Designer + UX Architect specialized in large-scale Arabic Government Enterprise Systems.
+
+Design a complete UI/UX system in Figma for a real governmental workflow automation platform:
+
+━━━━━━━━━━━━━━━━━━━
+🏛 Government System
+Directorate of Education – Rural Damascus
+━━━━━━━━━━━━━━━━━━━
+
+This is a full digital transformation system for managing governmental transactions, including:
+
+* Organizations management
+* Departments & hierarchical units
+* Roles & permissions system
+* Dynamic fields engine
+* File management system
+* Document templates management
+* BPMN Workflow / Process automation
+* Task-based transaction system
+
+━━━━━━━━━━━━━━━━━━━
+🌍 CRITICAL LANGUAGE & DIRECTION RULES
+━━━━━━━━━━━━━━━━━━━
+
+* The ENTIRE UI must be in Arabic only
+* Full RTL (Right-to-Left) layout
+* No English labels in UI at all
+* Designed for Arabic government employees
+* Formal Modern Standard Arabic (not dialect)
+
+Only system instructions here are in English — UI itself must be Arabic.
+
+━━━━━━━━━━━━━━━━━━━
+🎨 DESIGN SYSTEM (VERY IMPORTANT)
+━━━━━━━━━━━━━━━━━━━
+
+Use a calm, elegant governmental theme:
+
+Primary Colors (Olive):
+
+* #556B2F
+* #3F4F24
+* #7A8F4D
+
+Beige System:
+
+* #E8DCCB
+* #F5EFE6
+* #FAF8F3
+
+Accent:
+
+* #A67C52
+
+Status Colors:
+
+* Success: #4F7942
+* Warning: #C58B39
+* Error: #B85450
+
+⚠️ Do NOT use bright, neon, or aggressive colors.
+
+━━━━━━━━━━━━━━━━━━━
+🧠 DESIGN STYLE
+━━━━━━━━━━━━━━━━━━━
+
+The system must feel like:
+
+* Modern Government ERP
+* Highly structured administrative system
+* Calm and minimal
+* Highly readable
+* Non-cluttered UI
+* Trustworthy and formal
+
+Focus on clarity over decoration.
+
+━━━━━━━━━━━━━━━━━━━
+📊 INFORMATION ARCHITECTURE
+━━━━━━━━━━━━━━━━━━━
+
+Design a full admin dashboard system with RTL sidebar navigation:
+
+Sidebar Items (in Arabic UI):
+
+* الرئيسية
+* المؤسسات
+* الأقسام والدوائر
+* الأدوار
+* الحقول
+* الملفات
+* قوالب المستندات
+* العمليات (BPMN)
+* الموظفين (placeholder)
+* الإعدادات
+
+━━━━━━━━━━━━━━━━━━━
+🏠 1- DASHBOARD (HOME)
+━━━━━━━━━━━━━━━━━━━
+
+Design a professional Arabic dashboard with:
+
+📊 Statistics Cards:
+
+* عدد المؤسسات
+* عدد الأقسام
+* عدد الأدوار
+* عدد الحقول
+* عدد الملفات
+* عدد القوالب
+* عدد العمليات
+
+📈 Analytics Section:
+
+* Daily workflow activity chart
+* Transaction status chart:
+
+  * مكتملة
+  * قيد التنفيذ
+  * مرفوضة
+
+⚡ Quick Actions:
+
+* إنشاء مؤسسة
+* إنشاء قسم
+* إنشاء دور
+* إنشاء حقل
+
+📋 Recent Activity:
+
+* آخر المعاملات
+* آخر العمليات
+* آخر التعديلات
+
+━━━━━━━━━━━━━━━━━━━
+🏢 2- ORGANIZATIONS MODULE
+━━━━━━━━━━━━━━━━━━━
+
+Design:
+
+* Professional data table
+* Arabic search bar
+* Filters
+* Pagination
+
+Fields (based on real API):
+
+* اسم المؤسسة
+* المؤسسة الأم (parent_id)
+* الموقع (location_id)
+
+Actions:
+
+* إنشاء
+* تعديل
+* حذف
+* عرض التفاصيل
+
+━━━━━━━━━━━━━━━━━━━
+🏛 3- DEPARTMENTS MODULE
+━━━━━━━━━━━━━━━━━━━
+
+Important:
+
+Departments support hierarchy (tree structure).
+
+Design:
+
+* Tree View (expand/collapse)
+* Nested departments UI
+* Hierarchical visualization
+
+Fields:
+
+* اسم القسم
+* المؤسسة
+* القسم الأب
+* حالة النشاط
+
+━━━━━━━━━━━━━━━━━━━
+👤 4- ROLES MODULE
+━━━━━━━━━━━━━━━━━━━
+
+Design:
+
+* Role cards + table hybrid
+
+Fields:
+
+* اسم الدور
+* كود الدور
+* المؤسسة
+* القسم
+* camunda_group_key (important)
+
+Example:
+DEPARTMENT_DIRECTOR__ORG1__DEPT2
+
+━━━━━━━━━━━━━━━━━━━
+🧩 5- DYNAMIC FIELDS SYSTEM
+━━━━━━━━━━━━━━━━━━━
+
+Field Types:
+
+* نص
+* رقم
+* تاريخ
+* نعم/لا
+* قائمة
+
+⚠️ If type = List:
+
+* Show dynamic UI to add/remove options
+
+Design:
+
+* Field cards
+* Type badges
+* Value previews
+* Usage indicators
+
+━━━━━━━━━━━━━━━━━━━
+📁 6- FILE MANAGEMENT
+━━━━━━━━━━━━━━━━━━━
+
+Design:
+
+* Grid + List view
+* File cards
+
+Fields:
+
+* اسم الملف
+* النوع
+* التصنيف
+
+Supported types:
+
+* PDF
+* DOCX
+* Images
+* Other documents
+
+━━━━━━━━━━━━━━━━━━━
+📄 7- DOCUMENT TEMPLATES
+━━━━━━━━━━━━━━━━━━━
+
+Design:
+
+* Drag & Drop upload area
+* Template list
+* Preview panel
+
+API fields:
+
+* name
+* file_type
+* engine_type
+* config_json
+
+━━━━━━━━━━━━━━━━━━━
+⚙️ 8- BPMN PROCESS SYSTEM (CRITICAL)
+━━━━━━━━━━━━━━━━━━━
+
+This is the most important module.
+
+Design a full Workflow Builder system similar to:
+
+* BPMN Designer tools
+* Workflow automation systems
+* Enterprise process engines
+
+━━━━━━━━━━━━━━━━━━━
+🎯 CORE CONCEPT
+━━━━━━━━━━━━━━━━━━━
+
+Each process contains steps (nodes).
+
+Each step is either:
+
+1- User Task
+2- Service Task
+
+━━━━━━━━━━━━━━━━━━━
+👤 USER TASK (IMPORTANT)
+━━━━━━━━━━━━━━━━━━━
+
+Can be linked to:
+
+* Role
+* Fields
+* Files
+* Templates
+
+━━━━━━━━━━━━━━━━━━━
+🧠 REQUIRED UX SCREEN
+━━━━━━━━━━━━━━━━━━━
+
+Design a "Process Step Assignment" interface:
+
+Each step should appear as a card containing:
+
+* Step name (Arabic)
+* Step type
+* Assigned role
+* Attached fields
+* Attached files
+* Attached templates
+
+With ability to:
+
+* Select Role
+* Multi-select Fields
+* Multi-select Files
+* Multi-select Templates
+
+━━━━━━━━━━━━━━━━━━━
+🧭 VISUAL WORKFLOW BUILDER
+━━━━━━━━━━━━━━━━━━━
+
+Design a visual BPMN flow:
+
+* Nodes (steps)
+* Connections (flow lines)
+* Highlight active step
+* Status indicators
+
+━━━━━━━━━━━━━━━━━━━
+📌 REAL EXAMPLE
+━━━━━━━━━━━━━━━━━━━
+
+Process: "Request Official Document"
+
+Steps:
+
+1- استلام الطلب (Service Task)
+2- تدقيق البيانات (User Task - Employee)
+3- اعتماد المدير (User Task - Manager)
+4- إصدار الوثيقة (Service Task)
+
+Each step must support role + data binding.
+
+━━━━━━━━━━━━━━━━━━━
+🎨 UI STYLE RULES
+━━━━━━━━━━━━━━━━━━━
+
+* Soft shadows only
+* Rounded corners
+* Beige backgrounds
+* Olive primary actions
+* Clean spacing system
+* Arabic typography (Cairo / Tajawal)
+* Minimal icons
+* No visual clutter
+
+━━━━━━━━━━━━━━━━━━━
+📱 RESPONSIVENESS
+━━━━━━━━━━━━━━━━━━━
+
+Design for:
+
+* Desktop (main)
+* Tablet
+* Large screens
+
+━━━━━━━━━━━━━━━━━━━
+🚨 STRICT RULES
+━━━━━━━━━━━━━━━━━━━
+
+* NO English text in UI
+* NO SaaS-style Western dashboards
+* NO overly complex visuals
+* Must feel like a real Arabic government system
+* UX must be simple for non-technical users
+* Focus on clarity and usability
+
+━━━━━━━━━━━━━━━━━━━
+🏁 FINAL OUTPUT
+━━━━━━━━━━━━━━━━━━━
+
+Create a full Figma system including:
+
+1- Design System
+2- Dashboard UI
+3- Sidebar layout
+4- All modules screens
+5- BPMN workflow builder UI
+
+The final result should look like a real, production-ready Arabic governmental digital transformation system.
