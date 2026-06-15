@@ -5,18 +5,15 @@ import {
   MessageSquare,
   CheckCircle2,
   Clock,
-  XCircle,
-  ArrowLeftRight,
-  PenSquare,
   User,
   Calendar,
   Building2,
   FileText,
   Shield,
+  Loader2,
 } from 'lucide-react';
-import { RejectModal } from './modals/RejectModal';
-import { TransferModal } from './modals/TransferModal';
 import { SuccessModal } from './modals/SuccessModal';
+import { initialTransactions } from './transactionData';
 
 interface TransactionDetailsProps {
   transactionId: string;
@@ -27,7 +24,7 @@ const timelineEvents = [
   { status: 'done', action: 'استلام وتسجيل المعاملة', user: 'نظام الاستقبال', time: '2024-01-29 09:15', note: 'تم استلام المعاملة وإعطاؤها الرقم التسلسلي' },
   { status: 'done', action: 'مراجعة أولية', user: 'حسن كامل', time: '2024-01-29 11:30', note: 'تمت المراجعة — المستندات مكتملة' },
   { status: 'done', action: 'إحالة لرئيس الدائرة', user: 'حسن كامل', time: '2024-01-30 08:45', note: 'تم الإحالة للاعتماد النهائي' },
-  { status: 'current', action: 'بانتظار توقيع رئيس الدائرة', user: 'محمد العمر', time: '2024-01-31 10:00', note: '' },
+  { status: 'current', action: 'بانتظار معالجة رئيس الدائرة', user: 'محمد العمر', time: '2024-01-31 10:00', note: '' },
   { status: 'pending', action: 'إصدار القرار النهائي', user: '—', time: '—', note: '' },
   { status: 'pending', action: 'إشعار مقدم الطلب', user: '—', time: '—', note: '' },
 ];
@@ -46,23 +43,42 @@ const attachments = [
 ];
 
 export function TransactionDetails({ transactionId, onBack }: TransactionDetailsProps) {
+  const sourceTransaction = initialTransactions.find((tx) => tx.id === transactionId) ?? null;
+  const [status, setStatus] = useState(sourceTransaction?.status ?? 'بانتظار المعالجة');
+  const [assignee, setAssignee] = useState(sourceTransaction?.assignee ?? null);
   const [showReject, setShowReject] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [note, setNote] = useState('');
+  const [receiving, setReceiving] = useState(false);
+
+  const isAssignedElsewhere = Boolean(assignee && assignee !== 'محمد العمر');
 
   const handleSuccess = (msg: string) => {
-    setShowReject(false);
-    setShowTransfer(false);
     setSuccessMsg(msg);
     setShowSuccess(true);
   };
 
+  const handleReceive = () => {
+    if (isAssignedElsewhere) {
+      setSuccessMsg(`تعذر استلام المعاملة ${transactionId} لأن المعاملة مُسجلة بالفعل باسم ${assignee}`);
+      setShowSuccess(true);
+      return;
+    }
+
+    setReceiving(true);
+    window.setTimeout(() => {
+      setStatus('قيد المعالجة');
+      setAssignee('محمد العمر');
+      setReceiving(false);
+      setSuccessMsg(`تم استلام المعاملة ${transactionId} بنجاح — أصبحت الآن قيد المعالجة`);
+      setShowSuccess(true);
+    }, 800);
+  };
+
   return (
     <>
-      <RejectModal isOpen={showReject} onClose={() => setShowReject(false)} onConfirm={() => handleSuccess('تم رفض المعاملة وإشعار مقدم الطلب')} />
-      <TransferModal isOpen={showTransfer} onClose={() => setShowTransfer(false)} onConfirm={() => handleSuccess('تم تحويل المعاملة بنجاح')} />
       <SuccessModal isOpen={showSuccess} onClose={() => setShowSuccess(false)} message={successMsg} />
 
       <div className="p-8">
@@ -83,9 +99,9 @@ export function TransactionDetails({ transactionId, onBack }: TransactionDetails
               <h1 className="text-2xl" style={{ color: 'var(--primary)' }}>طلب وثيقة رسمية</h1>
               <span
                 className="px-3 py-1 rounded-full text-sm"
-                style={{ backgroundColor: 'rgba(5,66,57,0.08)', color: 'var(--primary)' }}
+                style={{ backgroundColor: status === 'قيد المعالجة' ? 'rgba(152,133,97,0.12)' : 'rgba(5,66,57,0.08)', color: status === 'قيد المعالجة' ? '#988561' : 'var(--primary)' }}
               >
-                بانتظار التوقيع
+                {status}
               </span>
               <span
                 className="px-2 py-1 rounded text-xs"
@@ -97,32 +113,24 @@ export function TransactionDetails({ transactionId, onBack }: TransactionDetails
             <p className="text-sm opacity-60 font-mono">{transactionId}</p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowTransfer(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition-all hover:shadow-md"
-              style={{ borderColor: 'var(--border)', color: 'var(--charcoal-dark)' }}
-            >
-              <ArrowLeftRight className="w-4 h-4" />
-              تحويل
-            </button>
-            <button
-              onClick={() => setShowReject(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90"
-              style={{ backgroundColor: 'var(--umber-light)', color: 'white' }}
-            >
-              <XCircle className="w-4 h-4" />
-              رفض
-            </button>
-            <button
-              onClick={() => handleSuccess('تم التوقيع على المعاملة بنجاح')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90"
-              style={{ backgroundColor: 'var(--primary)', color: 'white' }}
-            >
-              <PenSquare className="w-4 h-4" />
-              توقيع واعتماد
-            </button>
+            {status === 'بانتظار المعالجة' && !assignee && (
+              <button
+                onClick={handleReceive}
+                disabled={receiving}
+                className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+                style={{ backgroundColor: 'var(--primary)', color: 'white' }}
+              >
+                {receiving ? 'جاري الاستلام...' : 'استلام المعاملة'}
+              </button>
+            )}
           </div>
         </div>
+
+        {isAssignedElsewhere && (
+          <div className="mb-6 rounded-xl border p-4" style={{ backgroundColor: 'rgba(107,31,42,0.06)', borderColor: 'rgba(107,31,42,0.18)' }}>
+            <p className="text-sm" style={{ color: '#6b1f2a' }}>تم استلام هذه المعاملة من قبل {assignee} مسبقاً، لذلك لا يمكن إجراء أي توقيع أو تحويل الآن.</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
@@ -136,6 +144,7 @@ export function TransactionDetails({ transactionId, onBack }: TransactionDetails
                   { icon: Shield, label: 'رقم الهوية', value: '012345678' },
                   { icon: Building2, label: 'الدائرة', value: 'الشؤون الإدارية' },
                   { icon: Calendar, label: 'تاريخ التقديم', value: '2024-01-29' },
+                  { icon: User, label: 'المستلم الحالي', value: assignee ?? 'لم يتم الاستلام بعد' },
                 ].map((field, idx) => {
                   const Icon = field.icon;
                   return (

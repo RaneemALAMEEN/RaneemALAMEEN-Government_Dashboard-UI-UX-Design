@@ -29,7 +29,7 @@ interface DeptTx {
   category: string;
   categoryColor: string;
   date: string;
-  status: 'قيد الانتظار' | 'قيد المعالجة' | 'منجزة' | 'مسودة' | 'مرفوضة';
+  status: 'بانتظار المعالجة' | 'قيد المعالجة' | 'منجزة' | 'مرفوضة';
   assignedTo: string;
 }
 
@@ -38,10 +38,10 @@ const allDeptTransactions: DeptTx[] = [
   ...transactionRows.map((tx) => ({ ...tx, assignedTo: assignedToMap[tx.id] ?? 'غير محدد' })),
   { id: 'TXN-2024-441', typeId: 'external-transfer', name: 'طلب وثيقة رسمية',   category: 'الموارد البشرية',           categoryColor: '#054239', date: '2024-01-29', status: 'قيد المعالجة', assignedTo: 'محمد العمر' },
   { id: 'TXN-2024-440', typeId: 'internal-transfer', name: 'نقل موظف',            category: 'الموارد البشرية',           categoryColor: '#054239', date: '2024-01-31', status: 'قيد المعالجة', assignedTo: 'حسن كامل' },
-  { id: 'TXN-2024-439', typeId: 'unpaid-leave',      name: 'طلب إجازة',           category: 'الموارد البشرية',           categoryColor: '#054239', date: '2024-01-30', status: 'قيد الانتظار', assignedTo: 'محمد العمر' },
+  { id: 'TXN-2024-439', typeId: 'unpaid-leave',      name: 'طلب إجازة',           category: 'الموارد البشرية',           categoryColor: '#054239', date: '2024-01-30', status: 'بانتظار المعالجة', assignedTo: 'محمد العمر' },
   { id: 'TXN-2024-438', typeId: 'ministry-letter',   name: 'مراسلة رسمية',        category: 'المراسلات الوزارية',        categoryColor: '#988561', date: '2024-01-30', status: 'منجزة',         assignedTo: 'سارة يوسف' },
   { id: 'TXN-2024-437', typeId: 'tech-support',      name: 'طلب دعم تقني',        category: 'المعلوماتية والدعم التقني', categoryColor: '#428177', date: '2024-01-29', status: 'مرفوضة',        assignedTo: 'كريم منصور' },
-  { id: 'TXN-2024-435', typeId: 'teacher-confirm',   name: 'نقل موظف',            category: 'الموارد البشرية',           categoryColor: '#054239', date: '2024-01-28', status: 'قيد الانتظار', assignedTo: 'محمد العمر' },
+  { id: 'TXN-2024-435', typeId: 'teacher-confirm',   name: 'نقل موظف',            category: 'الموارد البشرية',           categoryColor: '#054239', date: '2024-01-28', status: 'بانتظار المعالجة', assignedTo: 'محمد العمر' },
 ];
 
 const PAGE_SIZE = 8;
@@ -52,20 +52,20 @@ const categoryIcons: Record<string, typeof FileText> = {
 };
 
 const statusConfig: Record<string, { bg: string; color: string }> = {
-  'قيد الانتظار':  { bg: 'rgba(5,66,57,0.08)',     color: '#002623' },
-  'قيد المعالجة':  { bg: 'rgba(152,133,97,0.1)',   color: '#988561' },
-  'منجزة':         { bg: 'rgba(66,129,119,0.1)',   color: '#428177' },
-  'مسودة':         { bg: 'rgba(185,167,121,0.12)', color: '#b9a779' },
-  'مرفوضة':        { bg: 'rgba(107,31,42,0.08)',   color: '#6b1f2a' },
+  'بانتظار المعالجة': { bg: 'rgba(37, 99, 235, 0.18)', color: '#1d4ed8' },
+  'قيد المعالجة':     { bg: 'rgba(249, 115, 22, 0.18)', color: '#c2410c' },
+  'منجزة':            { bg: 'rgba(34, 197, 94, 0.18)', color: '#15803d' },
+  'مرفوضة':           { bg: 'rgba(239, 68, 68, 0.18)', color: '#b91c1c' },
 };
 
 const categories = [
   'الكل', 'الموارد البشرية', 'شؤون المدرسين', 'المراسلات الوزارية',
   'الإحصائيات والدراسات', 'الأبنية والصيانة', 'المعلوماتية والدعم التقني',
 ];
-const statuses = ['الكل', 'قيد الانتظار', 'قيد المعالجة', 'منجزة', 'مرفوضة'];
+const statuses = ['الكل', 'بانتظار المعالجة', 'قيد المعالجة', 'منجزة', 'مرفوضة'];
 
 export function DepartmentTransactionsPage() {
+  const [transactions, setTransactions] = useState(allDeptTransactions);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('الكل');
   const [activeStatus, setActiveStatus] = useState('الكل');
@@ -74,7 +74,7 @@ export function DepartmentTransactionsPage() {
 
   // Deduplicate by id (keep first occurrence — the additional rows have priority via ordering)
   const seen = new Set<string>();
-  const deduped = allDeptTransactions.filter((tx) => {
+  const deduped = transactions.filter((tx) => {
     if (seen.has(tx.id)) return false;
     seen.add(tx.id);
     return true;
@@ -89,6 +89,10 @@ export function DepartmentTransactionsPage() {
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handleReceive = (id: string) => {
+    setTransactions((prev) => prev.map((tx) => tx.id === id ? { ...tx, status: 'قيد المعالجة' } : tx));
+  };
 
   if (viewTxId) {
     return <TransactionDetailView transactionId={viewTxId} onBack={() => setViewTxId(null)} />;
@@ -106,7 +110,7 @@ export function DepartmentTransactionsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'الإجمالي',      value: deduped.length,                                           color: '#054239', bg: 'rgba(5,66,57,0.08)' },
-          { label: 'قيد الانتظار', value: deduped.filter(t => t.status === 'قيد الانتظار').length,   color: '#002623', bg: 'rgba(5,66,57,0.05)' },
+          { label: 'بانتظار المعالجة', value: deduped.filter(t => t.status === 'بانتظار المعالجة').length, color: '#1d4ed8', bg: 'rgba(37,99,235,0.10)' },
           { label: 'قيد المعالجة', value: deduped.filter(t => t.status === 'قيد المعالجة').length,   color: '#988561', bg: 'rgba(152,133,97,0.1)' },
           { label: 'منجزة',        value: deduped.filter(t => t.status === 'منجزة').length,          color: '#428177', bg: 'rgba(66,129,119,0.08)' },
         ].map((s, i) => (
@@ -230,14 +234,24 @@ export function DepartmentTransactionsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => setViewTxId(tx.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:shadow-sm"
-                      style={{ backgroundColor: 'var(--beige)', color: 'var(--primary)' }}
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      عرض التفاصيل
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setViewTxId(tx.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs transition-all hover:shadow-sm"
+                        style={{ backgroundColor: 'var(--beige)', color: 'var(--primary)' }}
+                      >
+                        عرض التفاصيل
+                      </button>
+                      {tx.status === 'بانتظار المعالجة' && (
+                        <button
+                          onClick={() => handleReceive(tx.id)}
+                          className="px-3 py-1.5 rounded-lg text-xs transition-all hover:shadow-sm"
+                          style={{ backgroundColor: 'rgba(37,99,235,0.10)', color: '#1d4ed8' }}
+                        >
+                          استلام المعاملة
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
