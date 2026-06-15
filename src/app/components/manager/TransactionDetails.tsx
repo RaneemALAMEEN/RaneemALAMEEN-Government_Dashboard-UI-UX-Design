@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ArrowRight,
   Paperclip,
@@ -72,6 +72,13 @@ export function TransactionDetails({ transactionId, autoReceive, onBack }: Trans
   const [note, setNote] = useState('');
   const [receiving, setReceiving] = useState(false);
 
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => setShowSuccess(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
   const isAssignedElsewhere = Boolean(assignee && assignee !== 'محمد العمر');
 
   const handleSuccess = (msg: string) => {
@@ -136,7 +143,16 @@ export function TransactionDetails({ transactionId, autoReceive, onBack }: Trans
 
   return (
     <>
-      <SuccessModal isOpen={showSuccess} onClose={() => setShowSuccess(false)} message={successMsg} />
+      {/* Toast Notification */}
+      {showSuccess && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in transition-all" style={{ direction: 'rtl' }}>
+          <div className="bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+            <p className="text-sm font-medium">{successMsg}</p>
+          </div>
+        </div>
+      )}
+
       <SignatureModal
         isOpen={showSignModal}
         onClose={() => setShowSignModal(false)}
