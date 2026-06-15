@@ -13,10 +13,12 @@ import {
   Loader2,
 } from 'lucide-react';
 import { SuccessModal } from './modals/SuccessModal';
+import { SignatureModal } from './modals/SignatureModal';
 import { initialTransactions } from './transactionData';
 
 interface TransactionDetailsProps {
   transactionId: string;
+  autoReceive?: boolean;
   onBack: () => void;
 }
 
@@ -42,13 +44,18 @@ const attachments = [
   { name: 'شهادة الخدمة السابقة.pdf', size: '312 KB', type: 'pdf' },
 ];
 
-export function TransactionDetails({ transactionId, onBack }: TransactionDetailsProps) {
+export function TransactionDetails({ transactionId, autoReceive, onBack }: TransactionDetailsProps) {
   const sourceTransaction = initialTransactions.find((tx) => tx.id === transactionId) ?? null;
-  const [status, setStatus] = useState(sourceTransaction?.status ?? 'بانتظار المعالجة');
-  const [assignee, setAssignee] = useState(sourceTransaction?.assignee ?? null);
+  const [status, setStatus] = useState(
+    autoReceive ? 'قيد المعالجة' : (sourceTransaction?.status ?? 'بانتظار المعالجة')
+  );
+  const [assignee, setAssignee] = useState(
+    autoReceive ? 'محمد العمر' : (sourceTransaction?.assignee ?? null)
+  );
   const [showReject, setShowReject] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showSignModal, setShowSignModal] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [note, setNote] = useState('');
   const [receiving, setReceiving] = useState(false);
@@ -77,9 +84,31 @@ export function TransactionDetails({ transactionId, onBack }: TransactionDetails
     }, 800);
   };
 
+  const handleCancelReceive = () => {
+    setReceiving(true);
+    window.setTimeout(() => {
+      setStatus('بانتظار المعالجة');
+      setAssignee(null);
+      setReceiving(false);
+      setSuccessMsg(`تم إلغاء استلام المعاملة ${transactionId} وإرجاعها لحالة بانتظار المعالجة`);
+      setShowSuccess(true);
+    }, 600);
+  };
+
+  const handleSigned = () => {
+    setStatus('منجزة');
+    // Success notice is shown inside the SignatureModal, but we can update state here
+  };
+
   return (
     <>
       <SuccessModal isOpen={showSuccess} onClose={() => setShowSuccess(false)} message={successMsg} />
+      <SignatureModal
+        isOpen={showSignModal}
+        onClose={() => setShowSignModal(false)}
+        onSigned={handleSigned}
+        documentTitle={`توقيع المعاملة رقم ${transactionId}`}
+      />
 
       <div className="p-8">
         {/* Back Button */}
@@ -122,6 +151,26 @@ export function TransactionDetails({ transactionId, onBack }: TransactionDetails
               >
                 {receiving ? 'جاري الاستلام...' : 'استلام المعاملة'}
               </button>
+            )}
+            {status === 'قيد المعالجة' && assignee === 'محمد العمر' && (
+              <>
+                <button
+                  onClick={() => setShowSignModal(true)}
+                  className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 flex items-center gap-1.5"
+                  style={{ backgroundColor: '#428177', color: 'white' }}
+                >
+                  <Shield className="w-4 h-4" />
+                  توقيع المعاملة
+                </button>
+                <button
+                  onClick={handleCancelReceive}
+                  disabled={receiving}
+                  className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 border"
+                  style={{ borderColor: '#6b1f2a', color: '#6b1f2a' }}
+                >
+                  {receiving ? 'جاري إلغاء الاستلام...' : 'إلغاء استلام المعاملة'}
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -30,7 +30,7 @@ const priorityConfig: Record<string, { color: string; bg: string }> = {
 };
 
 interface MyTransactionsProps {
-  onViewDetails: (id: string) => void;
+  onViewDetails: (id: string, autoReceive?: boolean) => void;
 }
 
 export function MyTransactions({ onViewDetails }: MyTransactionsProps) {
@@ -86,27 +86,7 @@ export function MyTransactions({ onViewDetails }: MyTransactionsProps) {
           <p className="text-sm opacity-60">المعاملات الموجهة إليك — {pendingCount} تحتاج استلاماً</p>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: 'بانتظار المعالجة', value: pendingCount, icon: PenSquare, color: '#1d4ed8', bg: 'rgba(37,99,235,0.10)' },
-            { label: 'مستعجلة',         value: urgentCount,    icon: AlertTriangle, color: '#6b1f2a', bg: 'rgba(107,31,42,0.08)' },
-            { label: 'منجزة هذا الشهر', value: completedCount, icon: CheckCircle2,  color: '#428177', bg: 'rgba(66,129,119,0.08)' },
-          ].map((s, idx) => {
-            const Icon = s.icon;
-            return (
-              <div key={idx} className="bg-white rounded-xl p-5 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="p-2 rounded-lg" style={{ backgroundColor: s.bg }}>
-                    <Icon className="w-4 h-4" style={{ color: s.color }} />
-                  </div>
-                  <span className="text-3xl" style={{ color: s.color }}>{s.value}</span>
-                </div>
-                <p className="text-sm opacity-60">{s.label}</p>
-              </div>
-            );
-          })}
-        </div>
+
 
         {/* Filters */}
         <div className="flex items-center gap-4 flex-wrap">
@@ -205,7 +185,7 @@ export function MyTransactions({ onViewDetails }: MyTransactionsProps) {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <button
-                          onClick={() => onViewDetails(tx.id)}
+                          onClick={() => onViewDetails(tx.id, false)}
                           className="px-2.5 py-1.5 rounded-lg text-xs transition-all hover:shadow-sm"
                           style={{ backgroundColor: 'var(--beige)', color: 'var(--primary)' }}
                         >
@@ -213,12 +193,11 @@ export function MyTransactions({ onViewDetails }: MyTransactionsProps) {
                         </button>
                         {needsReceipt && (
                           <button
-                            onClick={() => handleReceive(tx.id)}
-                            disabled={receivingId === tx.id}
-                            className="px-2.5 py-1.5 rounded-lg text-xs transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+                            onClick={() => onViewDetails(tx.id, true)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs transition-all hover:opacity-90"
                             style={{ backgroundColor: 'rgba(37,99,235,0.10)', color: '#1d4ed8' }}
                           >
-                            {receivingId === tx.id ? 'جاري الاستلام...' : 'استلام المعاملة'}
+                            استلام المعاملة
                           </button>
                         )}
                       </div>

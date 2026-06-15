@@ -12,36 +12,100 @@ type KeyStatus = 'detecting' | 'found' | 'not-found';
 
 export function SignatureModal({ isOpen, onClose, onSigned, documentTitle }: SignatureModalProps) {
   const [keyStatus, setKeyStatus] = useState<KeyStatus>('detecting');
-  const [pin, setPin] = useState('');
-  const [showPin, setShowPin] = useState(false);
+  const [pinArray, setPinArray] = useState<string[]>(['', '', '', '', '', '']);
+  const [errorMsg, setErrorMsg] = useState('');
   const [signing, setSigning] = useState(false);
   const [signed, setSigned] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setKeyStatus('detecting');
-      setPin('');
+      setPinArray(['', '', '', '', '', '']);
+      setErrorMsg('');
       setSigning(false);
       setSigned(false);
       return;
     }
     // Simulate key detection
-    const t = setTimeout(() => setKeyStatus('found'), 1800);
+    const t = setTimeout(() => setKeyStatus('found'), 1500);
     return () => clearTimeout(t);
   }, [isOpen]);
 
+  // Watch pinArray changes to auto-verify when 6 digits are typed
+  useEffect(() => {
+    const fullPin = pinArray.join('');
+    if (fullPin.length === 6) {
+      if (fullPin === '123456') {
+        setErrorMsg('');
+        handleSuccessSign();
+      } else {
+        setErrorMsg('رمز PIN غير صحيح. يرجى كتابة الرمز الصحيح الخاص بك.');
+        setPinArray(['', '', '', '', '', '']);
+        // Focus first box
+        setTimeout(() => {
+          document.getElementById('pin-input-0')?.focus();
+        }, 50);
+      }
+    }
+  }, [pinArray]);
+
   if (!isOpen) return null;
 
-  const handleSign = async () => {
-    if (pin.length < 4) return;
+  const handleSuccessSign = async () => {
     setSigning(true);
-    await new Promise((r) => setTimeout(r, 2200));
+    await new Promise((r) => setTimeout(r, 1200));
     setSigning(false);
     setSigned(true);
     setTimeout(() => {
       onSigned();
       onClose();
-    }, 1800);
+    }, 3500);
+  };
+
+  const handlePinChange = (val: string, index: number) => {
+    const newVal = val.replace(/\D/g, '').slice(-1);
+    const newPinArray = [...pinArray];
+    newPinArray[index] = newVal;
+    setPinArray(newPinArray);
+    setErrorMsg('');
+
+    if (newVal !== '' && index < 5) {
+      const nextInput = document.getElementById(`pin-input-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Backspace') {
+      if (pinArray[index] === '' && index > 0) {
+        const newPinArray = [...pinArray];
+        newPinArray[index - 1] = '';
+        setPinArray(newPinArray);
+        const prevInput = document.getElementById(`pin-input-${index - 1}`);
+        prevInput?.focus();
+        setErrorMsg('');
+      } else {
+        const newPinArray = [...pinArray];
+        newPinArray[index] = '';
+        setPinArray(newPinArray);
+        setErrorMsg('');
+      }
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const newPinArray = [...pinArray];
+    for (let i = 0; i < pastedData.length; i++) {
+      newPinArray[i] = pastedData[i];
+    }
+    setPinArray(newPinArray);
+    setErrorMsg('');
+
+    const nextIdx = Math.min(pastedData.length, 5);
+    const nextInput = document.getElementById(`pin-input-${nextIdx}`);
+    nextInput?.focus();
   };
 
   return (
@@ -63,7 +127,7 @@ export function SignatureModal({ isOpen, onClose, onSigned, documentTitle }: Sig
                 <Shield className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-white">التوقيع الإلكتروني الآمن</h3>
+                <h3 className="text-white font-medium">التوقيع الإلكتروني الآمن</h3>
                 <p className="text-xs text-white/70">
                   {documentTitle ?? 'توقيع المعاملة الرسمية'}
                 </p>
@@ -85,21 +149,41 @@ export function SignatureModal({ isOpen, onClose, onSigned, documentTitle }: Sig
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ backgroundColor: 'rgba(66,129,119,0.12)' }}
               >
-                <CheckCircle2 className="w-8 h-8" style={{ color: '#428177' }} />
+                <CheckCircle2 className="w-8 h-8 animate-bounce" style={{ color: '#428177' }} />
               </div>
-              <h3 className="mb-2" style={{ color: 'var(--primary)' }}>
+              <h3 className="mb-2 text-lg font-bold" style={{ color: 'var(--primary)' }}>
                 تم توقيع المعاملة إلكترونياً بنجاح
               </h3>
-              <p className="text-sm opacity-60">
-                تم ختم المستند وإرساله للمرحلة التالية
+              <p className="text-sm opacity-90 px-4 leading-relaxed" style={{ color: 'var(--primary)' }}>
+                تم التوقيع بواسطة الموظف المعتمد وانتقلت المعاملة للمرحلة التالية (إلى دائرة التخطيط والموارد البشرية).
               </p>
             </div>
           ) : (
             <>
-              {/* Instruction */}
-              <p className="text-sm opacity-60 mb-5 leading-relaxed">
-                يرجى توصيل مفتاح الأمان الإلكتروني الخاص بك ثم إدخال رمز PIN لإتمام عملية التوقيع.
-              </p>
+              {/* USB Key Instruction */}
+              {keyStatus !== 'found' ? (
+                <div
+                  className="p-3.5 rounded-xl text-xs leading-relaxed mb-5 border border-dashed flex items-start gap-2.5 animate-pulse"
+                  style={{ backgroundColor: 'rgba(107,31,42,0.03)', borderColor: 'rgba(107,31,42,0.18)', color: '#6b1f2a' }}
+                >
+                  <span className="text-base shrink-0">🔌</span>
+                  <div>
+                    <p className="font-bold mb-0.5">الرجاء إدخال الفلاشة:</p>
+                    <p>يرجى توصيل الفلاشة الخاصة بك التي تحتوي على مفتاح الأمان والتوقيع الإلكتروني الخاص بالموظف للبدء.</p>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="p-3.5 rounded-xl text-xs leading-relaxed mb-5 border flex items-start gap-2.5"
+                  style={{ backgroundColor: 'rgba(66,129,119,0.05)', borderColor: 'rgba(66,129,119,0.2)', color: '#428177' }}
+                >
+                  <span className="text-base shrink-0">✅</span>
+                  <div>
+                    <p className="font-bold mb-0.5">تم التحقق من الفلاشة:</p>
+                    <p>تم الكشف عن مفتاح الأمان والتوقيع الإلكتروني بنجاح. يرجى إدخال رمز PIN للموظف المكون من 6 أرقام لتوقيع المعاملة.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Key Detection Status */}
               <div
@@ -118,22 +202,18 @@ export function SignatureModal({ isOpen, onClose, onSigned, documentTitle }: Sig
                   >
                     {keyStatus === 'detecting' ? (
                       <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--primary)' }} />
-                    ) : keyStatus === 'found' ? (
-                      <Usb className="w-5 h-5" style={{ color: '#428177' }} />
                     ) : (
-                      <Key className="w-5 h-5 opacity-40" />
+                      <Usb className="w-5 h-5" style={{ color: '#428177' }} />
                     )}
                   </div>
                   <div>
                     <p className="text-sm">
-                      {keyStatus === 'detecting' && 'جاري البحث عن مفتاح الأمان...'}
-                      {keyStatus === 'found' && 'تم اكتشاف مفتاح الأمان بنجاح'}
-                      {keyStatus === 'not-found' && 'لم يتم اكتشاف مفتاح الأمان'}
+                      {keyStatus === 'detecting' && 'جاري البحث عن مفتاح الأمان (الفلاشة)...'}
+                      {keyStatus === 'found' && 'تم اكتشاف مفتاح الأمان (USB Key) بنجاح'}
                     </p>
                     <p className="text-xs mt-0.5 opacity-50">
                       {keyStatus === 'detecting' && 'يرجى الانتظار...'}
-                      {keyStatus === 'found' && 'eToken Pro — Serial: AE3F9D2C'}
-                      {keyStatus === 'not-found' && 'تأكد من توصيل مفتاح USB'}
+                      {keyStatus === 'found' && 'Secure eToken — Serial: AE3F9D2C'}
                     </p>
                   </div>
                   {keyStatus === 'found' && (
@@ -144,32 +224,33 @@ export function SignatureModal({ isOpen, onClose, onSigned, documentTitle }: Sig
 
               {/* PIN Field */}
               <div className="mb-5">
-                <label className="text-sm opacity-70 mb-2 block">رمز PIN</label>
-                <div className="relative">
-                  <input
-                    type={showPin ? 'text' : 'password'}
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                    placeholder="أدخل رمز PIN الخاص بمفتاحك"
-                    disabled={keyStatus !== 'found' || signing}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none tracking-widest"
-                    style={{
-                      borderColor: 'var(--border)',
-                      backgroundColor: keyStatus === 'found' ? 'white' : 'var(--beige)',
-                      opacity: keyStatus !== 'found' ? 0.5 : 1,
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPin(!showPin)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70 transition-all"
-                    disabled={keyStatus !== 'found'}
-                  >
-                    {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                <label className="text-sm opacity-70 mb-3 block text-center font-medium">رمز PIN للموظف (6 أرقام)</label>
+                <div className="flex justify-center gap-2.5" style={{ direction: 'ltr' }}>
+                  {pinArray.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`pin-input-${idx}`}
+                      type="password"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handlePinChange(e.target.value, idx)}
+                      onKeyDown={(e) => handleKeyDown(e, idx)}
+                      onPaste={idx === 0 ? handlePaste : undefined}
+                      disabled={keyStatus !== 'found' || signing}
+                      className="w-12 h-12 rounded-xl border-2 text-center text-xl font-bold outline-none transition-all"
+                      style={{
+                        borderColor: errorMsg ? 'var(--destructive)' : digit ? 'var(--primary)' : 'var(--border)',
+                        backgroundColor: keyStatus === 'found' ? 'white' : 'var(--beige)',
+                        color: 'var(--primary)',
+                        boxShadow: digit && !errorMsg ? '0 0 0 2px rgba(5,66,57,0.15)' : 'none',
+                      }}
+                    />
+                  ))}
                 </div>
-                {pin.length > 0 && pin.length < 4 && (
-                  <p className="text-xs mt-1" style={{ color: '#6b1f2a' }}>رمز PIN يجب أن يكون 4 أرقام على الأقل</p>
+                {errorMsg && (
+                  <p className="text-xs text-center mt-3 font-medium" style={{ color: 'var(--destructive)' }}>
+                    ❌ {errorMsg}
+                  </p>
                 )}
               </div>
 
@@ -182,24 +263,17 @@ export function SignatureModal({ isOpen, onClose, onSigned, documentTitle }: Sig
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSign}
-                  disabled={keyStatus !== 'found' || pin.length < 4 || signing}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: 'var(--primary)', color: 'white' }}
-                >
-                  {signing ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> جاري التوقيع...</>
-                  ) : (
-                    <><Shield className="w-4 h-4" /> توقيع واعتماد المعاملة</>
-                  )}
-                </button>
-                {!signing && (
+              <div className="flex gap-3 justify-between">
+                {signing ? (
+                  <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm text-white" style={{ backgroundColor: 'var(--primary)' }}>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    جاري توقيع المعاملة واعتمادها...
+                  </div>
+                ) : (
                   <button
                     onClick={onClose}
-                    className="px-5 py-3 rounded-xl text-sm border transition-all hover:bg-gray-50"
-                    style={{ borderColor: 'var(--border)' }}
+                    className="flex-1 py-3 rounded-xl text-sm border transition-all hover:bg-gray-50"
+                    style={{ borderColor: 'var(--border)', color: 'var(--charcoal-medium)' }}
                   >
                     إلغاء
                   </button>

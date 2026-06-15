@@ -38,6 +38,7 @@ export function ManagerLayout({ onExit }: ManagerLayoutProps) {
 
   // Manager Transactions (the old page)
   const [detailsId, setDetailsId] = useState<string | null>(null);
+  const [autoReceive, setAutoReceive] = useState(false);
   // Employee details
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   // Transaction Center — form flow
@@ -50,6 +51,7 @@ export function ManagerLayout({ onExit }: ManagerLayoutProps) {
 
   const goTo = (page: string) => {
     setDetailsId(null);
+    setAutoReceive(false);
     setSelectedEmployee(null);
     setFormTypeId(null);
     setFormTxId(undefined);
@@ -147,8 +149,9 @@ export function ManagerLayout({ onExit }: ManagerLayoutProps) {
       case 'manager-my-transactions':
         return (
           <MyTransactions
-            onViewDetails={(id) => {
+            onViewDetails={(id, shouldAutoReceive) => {
               setDetailsId(id);
+              setAutoReceive(!!shouldAutoReceive);
               setCurrentPage('manager-my-tx-details');
             }}
           />
@@ -157,8 +160,10 @@ export function ManagerLayout({ onExit }: ManagerLayoutProps) {
         return (
           <TransactionDetails
             transactionId={detailsId ?? 'TXN-2024-441'}
+            autoReceive={autoReceive}
             onBack={() => {
               setDetailsId(null);
+              setAutoReceive(false);
               setCurrentPage('manager-my-transactions');
             }}
           />
