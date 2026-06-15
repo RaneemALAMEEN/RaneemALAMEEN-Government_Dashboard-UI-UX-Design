@@ -11,9 +11,14 @@ import {
   FileText,
   Shield,
   Loader2,
+  XCircle,
+  Eye,
+  ArrowDownToLine,
+  PenSquare,
 } from 'lucide-react';
 import { SuccessModal } from './modals/SuccessModal';
 import { SignatureModal } from './modals/SignatureModal';
+import { RejectModal } from './modals/RejectModal';
 import { initialTransactions } from './transactionData';
 
 interface TransactionDetailsProps {
@@ -22,13 +27,20 @@ interface TransactionDetailsProps {
   onBack: () => void;
 }
 
-const timelineEvents = [
-  { status: 'done', action: 'استلام وتسجيل المعاملة', user: 'نظام الاستقبال', time: '2024-01-29 09:15', note: 'تم استلام المعاملة وإعطاؤها الرقم التسلسلي' },
-  { status: 'done', action: 'مراجعة أولية', user: 'حسن كامل', time: '2024-01-29 11:30', note: 'تمت المراجعة — المستندات مكتملة' },
-  { status: 'done', action: 'إحالة لرئيس الدائرة', user: 'حسن كامل', time: '2024-01-30 08:45', note: 'تم الإحالة للاعتماد النهائي' },
-  { status: 'current', action: 'بانتظار معالجة رئيس الدائرة', user: 'محمد العمر', time: '2024-01-31 10:00', note: '' },
-  { status: 'pending', action: 'إصدار القرار النهائي', user: '—', time: '—', note: '' },
-  { status: 'pending', action: 'إشعار مقدم الطلب', user: '—', time: '—', note: '' },
+type TimelineEvent = {
+  status: string;
+  action: string;
+  note?: string;
+  user?: string;
+  time?: string;
+};
+
+const timelineEvents: TimelineEvent[] = [
+  { status: 'done', action: 'تسجيل الديوان', note: 'تم التسجيل برقم 458/ص', user: 'محمد خالد', time: '10:00 ص' },
+  { status: 'done', action: 'الشؤون الإدارية والمناهج', note: 'تم التدقيق وإبداء الرأي', user: 'سميرة زيدان', time: '11:30 ص' },
+  { status: 'current', action: 'رئيس دائرة التعليم الثانوي', note: 'بانتظار توقيعك واتخاذ القرار' },
+  { status: 'pending', action: 'مساعد مدير التربية', note: 'للاطلاع والتوقيع' },
+  { status: 'pending', action: 'مدير التربية (القرار النهائي)', note: 'للاعتماد والتوجيه لإصدار القرار' },
 ];
 
 const auditTrail = [
@@ -95,6 +107,28 @@ export function TransactionDetails({ transactionId, autoReceive, onBack }: Trans
     }, 600);
   };
 
+  const handleRejectConfirm = () => {
+    setStatus('مرفوضة');
+    setShowReject(false);
+    setSuccessMsg(`تم رفض المعاملة ${transactionId} وإرسال إشعار لمقدم الطلب`);
+    setShowSuccess(true);
+  };
+
+  const [addedNotes, setAddedNotes] = useState<{ dept: string; date: string; note: string }[]>([]);
+
+  const handleAddNote = () => {
+    if (!note.trim()) return;
+    setAddedNotes([
+      ...addedNotes,
+      {
+        dept: 'رئيس دائرة التعليم الثانوي',
+        date: 'اليوم',
+        note: note.trim(),
+      },
+    ]);
+    setNote('');
+  };
+
   const handleSigned = () => {
     setStatus('منجزة');
     // Success notice is shown inside the SignatureModal, but we can update state here
@@ -109,277 +143,324 @@ export function TransactionDetails({ transactionId, autoReceive, onBack }: Trans
         onSigned={handleSigned}
         documentTitle={`توقيع المعاملة رقم ${transactionId}`}
       />
+      <RejectModal
+        isOpen={showReject}
+        onClose={() => setShowReject(false)}
+        onConfirm={handleRejectConfirm}
+      />
 
-      <div className="p-8">
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 mb-6 text-sm transition-all hover:opacity-70"
-          style={{ color: 'var(--primary)' }}
+      <div className="flex flex-col h-full bg-[#edebe0]">
+        {/* Sticky Header */}
+        <div
+          className="sticky top-0 z-30 px-8 py-5 border-b shadow-sm"
+          style={{
+            backgroundColor: '#edebe0',
+            borderColor: 'var(--border)',
+          }}
         >
-          <ArrowRight className="w-4 h-4" />
-          العودة للمعاملات
-        </button>
+          {/* Back Button */}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 mb-4 text-sm transition-all hover:opacity-70 cursor-pointer"
+            style={{ color: 'var(--primary)' }}
+          >
+            <ArrowRight className="w-4 h-4" />
+            العودة للمعاملات
+          </button>
 
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl" style={{ color: 'var(--primary)' }}>طلب وثيقة رسمية</h1>
-              <span
-                className="px-3 py-1 rounded-full text-sm"
-                style={{ backgroundColor: status === 'قيد المعالجة' ? 'rgba(152,133,97,0.12)' : 'rgba(5,66,57,0.08)', color: status === 'قيد المعالجة' ? '#988561' : 'var(--primary)' }}
-              >
-                {status}
-              </span>
-              <span
-                className="px-2 py-1 rounded text-xs"
-                style={{ backgroundColor: 'rgba(107,31,42,0.1)', color: '#6b1f2a' }}
-              >
-                مستعجل
-              </span>
+          {/* Header Content */}
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-1.5">
+                <h1 className="text-2xl font-bold" style={{ color: 'var(--primary)' }}>إجازة خاصة بلا أجر</h1>
+                <span
+                  className="px-3 py-1 rounded-full text-sm font-medium"
+                  style={{
+                    backgroundColor:
+                      status === 'قيد المعالجة' ? 'rgba(152,133,97,0.12)' :
+                      status === 'مرفوضة' ? 'rgba(107,31,42,0.1)' :
+                      'rgba(5,66,57,0.08)',
+                    color:
+                      status === 'قيد المعالجة' ? '#988561' :
+                      status === 'مرفوضة' ? '#6b1f2a' :
+                      'var(--primary)'
+                  }}
+                >
+                  {status}
+                </span>
+                <span
+                  className="px-2 py-1 rounded text-xs font-semibold"
+                  style={{ backgroundColor: 'rgba(107,31,42,0.1)', color: '#6b1f2a' }}
+                >
+                  مستعجل
+                </span>
+              </div>
+              <p className="text-sm opacity-60 font-mono">{transactionId}</p>
             </div>
-            <p className="text-sm opacity-60 font-mono">{transactionId}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {status === 'بانتظار المعالجة' && !assignee && (
-              <button
-                onClick={handleReceive}
-                disabled={receiving}
-                className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                style={{ backgroundColor: 'var(--primary)', color: 'white' }}
-              >
-                {receiving ? 'جاري الاستلام...' : 'استلام المعاملة'}
-              </button>
-            )}
-            {status === 'قيد المعالجة' && assignee === 'محمد العمر' && (
-              <>
+            
+            <div className="flex items-center gap-3">
+              {status === 'بانتظار المعالجة' && !assignee && (
                 <button
-                  onClick={() => setShowSignModal(true)}
-                  className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 flex items-center gap-1.5"
-                  style={{ backgroundColor: '#428177', color: 'white' }}
-                >
-                  <Shield className="w-4 h-4" />
-                  توقيع المعاملة
-                </button>
-                <button
-                  onClick={handleCancelReceive}
+                  onClick={handleReceive}
                   disabled={receiving}
-                  className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 border"
-                  style={{ borderColor: '#6b1f2a', color: '#6b1f2a' }}
+                  className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70 font-medium cursor-pointer"
+                  style={{ backgroundColor: 'var(--primary)', color: 'white' }}
                 >
-                  {receiving ? 'جاري إلغاء الاستلام...' : 'إلغاء استلام المعاملة'}
+                  {receiving ? 'جاري الاستلام...' : 'استلام المعاملة'}
                 </button>
-              </>
-            )}
+              )}
+              {status === 'قيد المعالجة' && assignee === 'محمد العمر' && (
+                <>
+                  <button
+                    onClick={() => setShowSignModal(true)}
+                    className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 flex items-center gap-1.5 font-medium cursor-pointer"
+                    style={{ backgroundColor: '#428177', color: 'white' }}
+                  >
+                    <Shield className="w-4 h-4" />
+                    موافقة وتوقيع إلكتروني
+                  </button>
+                  <button
+                    onClick={() => setShowReject(true)}
+                    className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 flex items-center gap-1.5 font-medium cursor-pointer"
+                    style={{ backgroundColor: '#6b1f2a', color: 'white' }}
+                  >
+                    <XCircle className="w-4 h-4" />
+                    رفض
+                  </button>
+                  <button
+                    onClick={handleCancelReceive}
+                    disabled={receiving}
+                    className="px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 border hover:bg-gray-50 font-medium cursor-pointer"
+                    style={{ borderColor: 'var(--charcoal-medium)', color: 'var(--charcoal-medium)' }}
+                  >
+                    {receiving ? 'جاري إلغاء الاستلام...' : 'إلغاء استلام المعاملة'}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
+        {/* Assignments Alert */}
         {isAssignedElsewhere && (
-          <div className="mb-6 rounded-xl border p-4" style={{ backgroundColor: 'rgba(107,31,42,0.06)', borderColor: 'rgba(107,31,42,0.18)' }}>
+          <div className="mx-8 mt-6 rounded-xl border p-4" style={{ backgroundColor: 'rgba(107,31,42,0.06)', borderColor: 'rgba(107,31,42,0.18)' }}>
             <p className="text-sm" style={{ color: '#6b1f2a' }}>تم استلام هذه المعاملة من قبل {assignee} مسبقاً، لذلك لا يمكن إجراء أي توقيع أو تحويل الآن.</p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-5">
-            {/* Requester Info */}
-            <div className="bg-white rounded-xl p-6 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
-              <h3 className="mb-4" style={{ color: 'var(--primary)' }}>معلومات مقدم الطلب</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { icon: User, label: 'الاسم الكامل', value: 'خالد أحمد مطر' },
-                  { icon: Shield, label: 'رقم الهوية', value: '012345678' },
-                  { icon: Building2, label: 'الدائرة', value: 'الشؤون الإدارية' },
-                  { icon: Calendar, label: 'تاريخ التقديم', value: '2024-01-29' },
-                  { icon: User, label: 'المستلم الحالي', value: assignee ?? 'لم يتم الاستلام بعد' },
-                ].map((field, idx) => {
-                  const Icon = field.icon;
-                  return (
-                    <div key={idx} className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg mt-0.5" style={{ backgroundColor: 'var(--beige)' }}>
-                        <Icon className="w-4 h-4" style={{ color: 'var(--primary)' }} />
-                      </div>
-                      <div>
-                        <p className="text-xs opacity-50 mb-0.5">{field.label}</p>
-                        <p className="text-sm">{field.value}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Transaction Details */}
-            <div className="bg-white rounded-xl p-6 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
-              <h3 className="mb-4" style={{ color: 'var(--primary)' }}>تفاصيل المعاملة</h3>
-              <div className="space-y-3">
-                {[
-                  { label: 'نوع المعاملة', value: 'طلب وثيقة رسمية' },
-                  { label: 'الغرض', value: 'التقديم على وظيفة خارجية — وزارة التعليم العالي' },
-                  { label: 'الأولوية', value: 'مستعجل' },
-                  { label: 'المرحلة الحالية', value: 'اعتماد رئيس الدائرة' },
-                ].map((d, idx) => (
-                  <div key={idx} className="flex justify-between py-2 border-b last:border-0" style={{ borderColor: 'var(--border)' }}>
-                    <span className="text-sm opacity-60">{d.label}</span>
-                    <span className="text-sm">{d.value}</span>
+        {/* Scrollable Page Body */}
+        <div className="flex-1 overflow-y-auto p-8 pt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Right side: details and note inputs */}
+            <div className="lg:col-span-2 space-y-6">
+              
+              {/* Card 1: Employee/Request Topic Card */}
+              <div className="bg-white rounded-xl p-6 border shadow-sm animate-fade-in" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-4 mb-6" style={{ direction: 'rtl' }}>
+                  <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-600 shrink-0 border border-gray-200 shadow-inner">
+                    أ أ
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="bg-white rounded-xl p-6 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="w-4 h-4" style={{ color: 'var(--primary)' }} />
-                <h3 style={{ color: 'var(--primary)' }}>الملاحظات</h3>
-              </div>
-              <div className="space-y-3 mb-4">
-                {[
-                  { user: 'حسن كامل', time: '2024-01-29 15:10', note: 'المستندات مكتملة وصحيحة، يوصى بالاعتماد.' },
-                ].map((n, idx) => (
-                  <div key={idx} className="p-3 rounded-lg" style={{ backgroundColor: 'var(--beige)' }}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">{n.user}</span>
-                      <span className="text-xs opacity-50">{n.time}</span>
+                  <div className="space-y-0.5 text-right flex-1">
+                    <h2 className="text-xl font-bold text-gray-900 leading-tight">أحمد خالد المحمود</h2>
+                    <p className="text-xs text-gray-500">مدرس مادة الرياضيات • ثانوية الباسل للمتفوقين</p>
+                    <div className="flex gap-2 mt-1.5 flex-wrap">
+                      <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 text-xs rounded-full border border-gray-100 font-mono">الرقم الذاتي: 984512</span>
+                      <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 text-xs rounded-full border border-gray-100 font-mono">الخدمة: 8 سنوات</span>
                     </div>
-                    <p className="text-sm opacity-70">{n.note}</p>
                   </div>
-                ))}
-              </div>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="أضف ملاحظة..."
-                rows={3}
-                className="w-full p-3 rounded-lg border text-sm outline-none resize-none"
-                style={{ borderColor: 'var(--border)', backgroundColor: 'var(--beige)' }}
-              />
-              {note && (
-                <button
-                  className="mt-2 px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90"
-                  style={{ backgroundColor: 'var(--primary)', color: 'white' }}
-                >
-                  إضافة الملاحظة
-                </button>
-              )}
-            </div>
+                </div>
 
-            {/* Attachments */}
-            <div className="bg-white rounded-xl p-6 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <Paperclip className="w-4 h-4" style={{ color: 'var(--primary)' }} />
-                <h3 style={{ color: 'var(--primary)' }}>المرفقات</h3>
-              </div>
-              <div className="space-y-2">
-                {attachments.map((att, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-3 rounded-lg border transition-all hover:shadow-sm"
-                    style={{ borderColor: 'var(--border)' }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--beige)' }}>
-                        <FileText className="w-4 h-4" style={{ color: 'var(--primary)' }} />
-                      </div>
-                      <div>
-                        <p className="text-sm">{att.name}</p>
-                        <p className="text-xs opacity-50">{att.size}</p>
-                      </div>
+                <div className="border-t pt-5" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText className="w-4 h-4 text-green-600 shrink-0" />
+                    <h3 className="font-bold text-gray-900">موضوع الطلب: إجازة خاصة بلا أجر</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-right mb-4">
+                    <div>
+                      <span className="text-xs text-gray-400 block mb-0.5">المدة المطلوبة:</span>
+                      <span className="text-sm font-semibold text-gray-800">سنة دراسية كاملة</span>
                     </div>
-                    <button className="text-sm" style={{ color: 'var(--primary)' }}>تحميل</button>
+                    <div>
+                      <span className="text-xs text-gray-400 block mb-0.5">الفترة:</span>
+                      <span className="text-sm font-semibold text-gray-800">01/09/2026 إلى 31/08/2027</span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Audit Trail */}
-            <div className="bg-white rounded-xl p-6 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
-              <h3 className="mb-4" style={{ color: 'var(--primary)' }}>سجل التدقيق (Audit Trail)</h3>
-              <div className="space-y-3">
-                {auditTrail.map((entry, idx) => (
-                  <div key={idx} className="flex gap-4 py-3 border-b last:border-0" style={{ borderColor: 'var(--border)' }}>
+                  <div>
+                    <span className="text-xs text-gray-400 block mb-1">السبب المذكور:</span>
+                    <div className="p-3.5 rounded-lg border-r-4 text-sm leading-relaxed" style={{ backgroundColor: 'rgba(185,167,121,0.08)', borderColor: '#b9a779', color: '#7a6a42' }}>
+                      السفر بقصد العمل لتأمين متطلبات المعيشة. مرفق عقد العمل الخارجي.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Attachments Card */}
+              <div className="bg-white rounded-xl p-6 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Paperclip className="w-4 h-4 text-gray-700 font-bold" />
+                  <h3 className="font-bold text-gray-900">المرفقات والوثائق</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { name: 'وثيقة_قائم_على_رأس_العمل.pdf', size: '1.2 MB' },
+                    { name: 'صورة_الهوية_الشخصية.pdf', size: '800 KB' },
+                    { name: 'عقد_عمل_مرفق.pdf', size: '2.5 MB' },
+                  ].map((att, idx) => (
                     <div
-                      className="w-2 h-2 rounded-full mt-1.5 shrink-0"
-                      style={{
-                        backgroundColor:
-                          entry.type === 'create' ? '#428177' :
-                          entry.type === 'status' ? 'var(--primary)' : '#b9a779',
-                      }}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-sm font-medium">{entry.action}</span>
-                        <span className="text-xs opacity-50">{entry.time}</span>
-                      </div>
-                      <p className="text-xs opacity-60 mb-0.5">بواسطة: {entry.user}</p>
-                      {entry.from && entry.to && (
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="opacity-50">{entry.from}</span>
-                          <span>←</span>
-                          <span style={{ color: 'var(--primary)' }}>{entry.to}</span>
+                      key={idx}
+                      className="flex items-center justify-between p-3.5 rounded-xl border transition-all hover:shadow-sm bg-white"
+                      style={{ borderColor: 'var(--border)' }}
+                    >
+                      {/* File Details */}
+                      <div className="flex items-center gap-3 text-right">
+                        <div className="p-2.5 rounded-lg bg-red-50 flex items-center justify-center shrink-0 border border-red-100">
+                          <FileText className="w-5 h-5 text-red-600" />
                         </div>
-                      )}
-                      {!entry.from && entry.to && (
-                        <p className="text-xs opacity-60">{entry.to}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800 text-right truncate max-w-[150px] md:max-w-[180px]" style={{ direction: 'ltr' }}>{att.name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5 text-right">{att.size}</p>
+                        </div>
+                      </div>
 
-          {/* Sidebar - Timeline */}
-          <div className="space-y-5">
-            <div className="bg-white rounded-xl p-5 border shadow-sm sticky top-6" style={{ borderColor: 'var(--border)' }}>
-              <h3 className="mb-5" style={{ color: 'var(--primary)' }}>مسار سير العمل</h3>
-              <div className="relative">
-                {timelineEvents.map((event, idx) => (
-                  <div key={idx} className="flex gap-3 pb-5 last:pb-0 relative">
-                    {/* Connector Line */}
-                    {idx < timelineEvents.length - 1 && (
-                      <div
-                        className="absolute top-5 right-[9px] w-0.5 bottom-0"
-                        style={{
-                          backgroundColor: event.status === 'done' ? 'var(--primary)' : 'var(--border)',
-                        }}
-                      />
-                    )}
-                    {/* Icon */}
-                    <div className="shrink-0 z-10">
-                      {event.status === 'done' ? (
-                        <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--primary)' }} />
-                      ) : event.status === 'current' ? (
-                        <Clock className="w-5 h-5" style={{ color: '#988561' }} />
-                      ) : (
+                      {/* Action Icon Buttons */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          title="عرض الملف"
+                          className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all border border-gray-100 cursor-pointer"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          title="تحميل الملف"
+                          className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all border border-gray-100 cursor-pointer"
+                        >
+                          <ArrowDownToLine className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Card 3: Notes Section (Below Attachments Card) */}
+              <div className="bg-white rounded-xl p-6 border shadow-sm space-y-4" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="w-4 h-4 text-gray-700" />
+                  <h3 className="font-bold text-gray-900">ملاحظات الدوائر السابقة</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  {[
+                    { dept: 'دائرة المناهج', date: '04 نيسان 2026', note: 'لا مانع من منح الإجازة. يتوفر لدينا مدرس بديل لتغطية نصاب مادة الرياضيات في ثانوية الباسل.', color: '#428177' },
+                    { dept: 'الشؤون الإدارية', date: '03 نيسان 2026', note: 'الطلب مستوفٍ للشروط القانونية وتجاوزت خدمة المدرس المدة المطلوبة.', color: '#988561' },
+                  ].map((n, idx) => (
+                    <div key={idx} className="p-4 rounded-xl border-r-4 text-right shadow-sm" style={{ backgroundColor: 'var(--beige)', borderRightColor: n.color }}>
+                      <div className="flex justify-between items-center mb-1 flex-row-reverse">
+                        <span className="text-xs text-gray-400 font-mono">{n.date}</span>
+                        <span className="text-sm font-semibold text-gray-800">{n.dept}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{n.note}</p>
+                    </div>
+                  ))}
+
+                  {/* Added User Notes */}
+                  {addedNotes.map((n, idx) => (
+                    <div key={idx} className="p-4 rounded-xl border-r-4 text-right shadow-sm" style={{ backgroundColor: 'var(--beige)', borderRightColor: 'var(--primary)' }}>
+                      <div className="flex justify-between items-center mb-1 flex-row-reverse">
+                        <span className="text-xs text-gray-400 font-mono">{n.date}</span>
+                        <span className="text-sm font-semibold text-gray-800">{n.dept}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{n.note}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Note Section */}
+                <div className="border-t pt-4 mt-4" style={{ borderColor: 'var(--border)' }}>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">إضافة ملاحظة</label>
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="اكتب ملاحظتك هنا..."
+                    rows={3}
+                    className="w-full p-3 rounded-lg border text-sm outline-none resize-none"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--beige)' }}
+                  />
+                  {note && (
+                    <button
+                      type="button"
+                      onClick={handleAddNote}
+                      className="mt-2.5 px-4 py-2 rounded-lg text-sm transition-all hover:opacity-90 font-medium cursor-pointer"
+                      style={{ backgroundColor: 'var(--primary)', color: 'white' }}
+                    >
+                      إضافة الملاحظة
+                    </button>
+                  )}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Left side: Timeline/Workflow */}
+            <div className="space-y-5">
+              <div className="bg-white rounded-xl p-5 border shadow-sm sticky top-6" style={{ borderColor: 'var(--border)' }}>
+                <h3 className="mb-5" style={{ color: 'var(--primary)' }}>مسار سير العمل</h3>
+                <div className="relative">
+                  {timelineEvents.map((event, idx) => (
+                    <div key={idx} className="flex gap-3 pb-5 last:pb-0 relative">
+                      {/* Connector Line */}
+                      {idx < timelineEvents.length - 1 && (
                         <div
-                          className="w-5 h-5 rounded-full border-2"
-                          style={{ borderColor: 'var(--border)', backgroundColor: 'white' }}
+                          className="absolute top-5 right-[9px] w-0.5 bottom-0"
+                          style={{
+                            backgroundColor: event.status === 'done' ? 'var(--primary)' : 'var(--border)',
+                          }}
                         />
                       )}
-                    </div>
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-sm mb-0.5"
+                      {/* Icon */}
+                      <div className="shrink-0 z-10">
+                        {event.status === 'done' ? (
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-green-100 text-green-600">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 fill-white" />
+                          </div>
+                        ) : event.status === 'current' ? (
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 border border-blue-200">
+                            <PenSquare className="w-3 h-3 text-blue-600" />
+                          </div>
+                        ) : (
+                          <div
+                            className="w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-gray-400 bg-white"
+                            style={{ borderColor: 'var(--border)' }}
+                          >
+                            {idx === 4 ? '🏁' : idx + 1}
+                          </div>
+                        )}
+                      </div>
+                      {/* Content */}
+                      <div
+                        className={`flex-1 min-w-0 p-2.5 text-right ${
+                          event.status === 'current' ? 'border rounded-xl' : ''
+                        }`}
                         style={{
-                          color:
-                            event.status === 'done' ? 'var(--charcoal-dark)' :
-                            event.status === 'current' ? '#988561' : '#aaa',
-                          fontWeight: event.status === 'current' ? '500' : '400',
+                          borderColor: event.status === 'current' ? 'rgba(59, 130, 246, 0.3)' : 'transparent',
+                          backgroundColor: event.status === 'current' ? 'rgba(59, 130, 246, 0.03)' : 'transparent',
                         }}
                       >
-                        {event.action}
-                      </p>
-                      {event.user !== '—' && (
-                        <p className="text-xs opacity-50">{event.user}</p>
-                      )}
-                      {event.time !== '—' && (
-                        <p className="text-xs opacity-40">{event.time}</p>
-                      )}
-                      {event.note && (
+                        <p className="text-sm font-semibold mb-1 text-gray-900">
+                          {event.action}
+                        </p>
+                        {event.user && event.user !== '—' && (
+                          <p className="text-xs text-gray-500 mb-0.5 flex items-center gap-1"><User className="w-3 h-3" /> {event.user}</p>
+                        )}
+                        {event.time && event.time !== '—' && (
+                          <p className="text-xs text-gray-400 mb-1 flex items-center gap-1"><Clock className="w-3 h-3" /> {event.time}</p>
+                        )}
+                        {event.note && (
                         <p
                           className="text-xs mt-1 px-2 py-1 rounded"
                           style={{ backgroundColor: 'var(--beige)', color: 'var(--charcoal-medium)' }}
@@ -390,24 +471,11 @@ export function TransactionDetails({ transactionId, autoReceive, onBack }: Trans
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
             </div>
 
-            {/* Quick Info Card */}
-            <div className="bg-white rounded-xl p-5 border shadow-sm" style={{ borderColor: 'var(--border)' }}>
-              <h4 className="mb-3 text-sm" style={{ color: 'var(--primary)' }}>إحصائيات سريعة</h4>
-              {[
-                { label: 'منذ الاستلام', value: '2 يوم' },
-                { label: 'عدد المراحل المكتملة', value: '3 من 6' },
-                { label: 'عدد المرفقات', value: '3 ملفات' },
-                { label: 'عدد الملاحظات', value: '1' },
-              ].map((s, idx) => (
-                <div key={idx} className="flex justify-between py-1.5 border-b last:border-0 text-sm" style={{ borderColor: 'var(--border)' }}>
-                  <span className="opacity-60">{s.label}</span>
-                  <span style={{ color: 'var(--primary)' }}>{s.value}</span>
-                </div>
-              ))}
-            </div>
+
           </div>
         </div>
       </div>
